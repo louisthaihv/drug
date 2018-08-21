@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +14,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Gate::define('admin', function ($user) {
+            return ($user->roles->first()->name === 'admin');
+        });
+
+        Gate::define('team-member', function ($user, $team) {
+            return ($user->teams->find($team->id));
+        });
     }
 
     /**

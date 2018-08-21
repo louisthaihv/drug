@@ -1,3 +1,13 @@
+@extends('layouts.master')
+
+
+@section('css')
+@stop
+
+
+@section('content')
+
+
 @if (session('message'))
     <div class="">
         {{ session('message') }}
@@ -41,3 +51,8 @@
 @endif
 
 <a href="/dashboard">Dashboard</a>
+
+@stop
+
+@section('js')
+@stop

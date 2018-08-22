@@ -6,12 +6,26 @@ use App\Models\Role;
 use App\Models\Team;
 use App\Models\UserMeta;
 use App\Notifications\ResetPassword;
+use App\Notifications\ActivateUserEmail2;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Gravatar;
 
 class User extends Authenticatable
 {
     use Notifiable;
+
+    public static $status = [
+        USER_STATUS_INACTIVE => 'Chưa kích hoạt',
+        USER_STATUS_ACTIVE => 'Đã kích hoạt'
+    ];
+
+    public static $gender = [
+        USER_GENDER_FEMALE => 'Nữ',
+        USER_GENDER_MALE => 'Nam'
+    ];
+
+    const AVATAR_PATH = "upload/avatars";
 
     /**
      * The database table used by the model.
@@ -49,9 +63,9 @@ class User extends Authenticatable
      *
      * @return Relationship
      */
-    public function roles()
+    public function role()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
     /**
@@ -60,10 +74,10 @@ class User extends Authenticatable
      * @param  string  $role
      * @return boolean
      */
-    public function hasRole($role)
+   public function hasRole($role)
     {
-        $roles = array_column($this->roles->toArray(), 'name');
-        return array_search($role, $roles) > -1;
+        $roleName = $this->role->name;
+        return $roleName == $role;
     }
 
     /**
@@ -80,7 +94,6 @@ class User extends Authenticatable
             }
         });
 
-        return false;
     }
 
     /**
@@ -140,5 +153,31 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
+    }
+
+    public function agent(){
+        return $this->belongsTo(Agent::class, 'agent_id', 'id');
+    }
+
+
+    public function getAvatar() {
+        if (!empty($this->avatar)) {
+            return asset($this->avatar);
+        }
+        return Gravatar::src($this->email);
+    }
+
+    public function getStatusNameAttribute() {
+
+        return self::$status[$this->getAttribute('status')];
+    }
+
+    public function getGenderNameAttribute() {
+
+        return self::$gender[$this->getAttribute('gender')];
+    }
+    public function sendEmailActive()
+    {
+        $this->notify(new ActivateUserEmail2($this->status));
     }
 }

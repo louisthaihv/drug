@@ -18,8 +18,10 @@ class DatabaseSeeder extends Seeder
         // truncate data
         App\Models\Role::truncate();
         App\Models\User::truncate();
+        App\Models\Agent::truncate();
 
         $this->call(RolesTableSeeder::class);
+        $this->call(AgentTableSeeder::class);
         $this->call(UserTableSeeder::class);
 
         Model::reguard();

@@ -113,13 +113,16 @@ Route::group(['middleware' => ['auth', 'active']], function () {
         | Users
         |--------------------------------------------------------------------------
         */
-        Route::resource('users', 'UserController', ['except' => ['create', 'show']]);
+        Route::resource('users', 'UserController', ['except' => ['show']]);
         Route::post('users/search', 'UserController@search');
         Route::get('users/search', 'UserController@index');
         Route::get('users/invite', 'UserController@getInvite');
         Route::get('users/switch/{id}', 'UserController@switchToUser');
         Route::post('users/invite', 'UserController@postInvite');
 
+        Route::get('users/getJSONData', ['as'=>'users.datatable', 'uses'=>'UserController@getJSONData']);
+        Route::post('users/togleStatusUser', ['uses' => 'UserController@togleStatusUser', 'as' =>'user.togleStatus']);
+        Route::post('users/multiple-delete', ['uses' => 'UserController@multipleDelete', 'as' =>'user.multiple.delete']);
         /*
         |--------------------------------------------------------------------------
         | Roles

@@ -15,6 +15,8 @@ use App\Models\Role;
 use App\Events\UserRegisteredEmail;
 use App\Notifications\ActivateUserEmail;
 use Illuminate\Support\Facades\Schema;
+use DataTables;
+use App\Models\Agent;
 
 class UserService
 {
@@ -41,17 +43,20 @@ class UserService
      * @var RoleService
      */
     protected $role;
+    protected $agent;
 
     public function __construct(
         User $model,
         UserMeta $userMeta,
         Team $team,
-        Role $role
+        Role $role,
+        Agent $agent
     ) {
         $this->model = $model;
         $this->userMeta = $userMeta;
         $this->team = $team;
         $this->role = $role;
+        $this->agent = $agent;
     }
 
     /**
@@ -246,19 +251,9 @@ class UserService
      */
     public function destroy($id)
     {
-        try {
-            return DB::transaction(function () use ($id) {
-                $this->unassignAllRoles($id);
-                $this->leaveAllTeams($id);
+        $user = $this->model->find($id);
+        return $user->delete();
 
-                $userMetaResult = $this->userMeta->where('user_id', $id)->delete();
-                $userResult = $this->model->find($id)->delete();
-
-                return ($userMetaResult && $userResult);
-            });
-        } catch (Exception $e) {
-            throw new Exception("We were unable to delete this profile", 1);
-        }
     }
 
     /**
@@ -409,5 +404,71 @@ class UserService
     {
         $user = $this->model->find($userId);
         $user->teams()->detach();
+    }
+
+    public function getJSONData($roleId = null, $search = "")
+    {
+
+        $builder = $this->model->with('role');
+        $admin = $this->getAdminAgent();
+
+        if(!empty($admin)){
+            $agentId = $admin->agent->id;
+
+            $builder->where('users.agent_id', $agentId);
+        }
+        if (!empty($roleId)) {
+            $builder = $builder->where('role_id', '=', $roleId);
+        }
+
+        return DataTables::eloquent($builder)
+            ->filter(function ($query) use ($search, $roleId) {
+                if (!empty($search)) {
+                    $search = strtolower(trim($search));
+                    $query->whereRaw('(LOWER(`users`.`name`) LIKE "%' . $search . '%" OR LOWER(`users`.`email`) LIKE "%' . $search . '%")');
+                }
+            })
+            ->addColumn('rName', function (User $user) {
+                return $user->role->name;
+            })
+            ->addColumn('status_name', function (User $user) {
+                return $user->status_name;
+            })
+            ->make(true);
+    }
+
+    public function getAdminAgent($user = null){
+        if(empty($user)) $user = auth()->user();
+
+        $agentId = $user->agent ? $user->agent->id : null;
+        return $agentId != null ? $this->model->where('agent_id', $agentId)->where('role_id', 2)->first() : null;
+    }
+
+    public function getAdminAgentId($user = null){
+        $admin = $this->getAdminAgent($user);
+
+        return $admin ? $admin->id : false;
+    }
+    public function togleStatusUser($userId)
+    {
+        $user = $this->model->find($userId);
+        if ($user) {
+            if ($user->status == USER_STATUS_ACTIVE) {
+                $user->status = USER_STATUS_INACTIVE;
+            }
+            else {
+                $user->status = USER_STATUS_ACTIVE;
+            }
+        }
+        if ($user->save()) {
+            $user->sendEmailActive();
+            return true;
+        }
+        return false;
+    }
+    public function store($data)
+    {
+        $data = array_merge($data, ['password' => bcrypt($data['password'] ?? 'bookvexe')]);
+        return $this->model->fill($data)->save();
     }
 }

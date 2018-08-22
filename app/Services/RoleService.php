@@ -158,4 +158,10 @@ class RoleService
 
         return $result;
     }
+
+    public function pluckSelection($field = 'id'){
+        $authRoleId = auth()->user()->role->id;
+
+        return $this->model->where('id' , '>=', $authRoleId)->pluck('name', $field);
+    }
 }

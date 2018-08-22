@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
   <title>AdminLTE 2 | Dashboard</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
@@ -14,6 +15,11 @@
   <link rel="stylesheet" href="{{ asset('bower_components/Ionicons/css/ionicons.min.css') }}">
   <!-- jvectormap -->
   <link rel="stylesheet" href="{{ asset('bower_components/jvectormap/jquery-jvectormap.css') }}">
+  <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+  <link href="{{ asset('bower_components/validation/css/bootstrapValidator.min.css') }}" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="{{ asset('bower_components/bootstrap-daterangepicker/daterangepicker.css')}}">
+  <!-- bootstrap datepicker -->
+  <link rel="stylesheet" href="{{ asset('bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css')}}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('dist/css/AdminLTE.min.css') }}">
   <!-- AdminLTE Skins. Choose a skin from the css/skins
@@ -26,6 +32,8 @@
   <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
   <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
+  <link href="{{asset('bower_components/toastr/toastr.css')}}" rel="stylesheet" type="text/css" />
+  <link href="{{ asset('css/admin/custom.css') }}" rel="stylesheet" type="text/css" />
 
   @yield('css')
 
@@ -292,11 +300,45 @@
 <script src="{{ asset('bower_components/jquery-slimscroll/jquery.slimscroll.min.js') }}"></script>
 <!-- ChartJS -->
 <script src="{{ asset('bower_components/chart.js/Chart.js') }}"></script>
+<script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+<script src="{{ asset('bower_components/toastr/toastr.js')}}" type="text/javascript"></script>
+<script src="{{ asset('bower_components/moment/min/moment.min.js')}}"></script>
+<script src="{{ asset('bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js')}}"></script>
+<script type="text/javascript" src="{{ asset('bower_components/validation/js/bootstrapValidator.min.js') }}" ></script>
+<script src="{{ asset("js/sweetalert2.all.js") }}"></script>
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{{ asset('dist/js/pages/dashboard2.js') }}"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{{ asset('dist/js/demo.js') }}"></script>
+<script type="text/javascript">
+        $(function () {
+            $('body').on('hidden.bs.modal', '.modal', function () {
+                $(this).removeData('bs.modal');
+            });
+        });
+        $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
 
+        var visible = false;
+        @if(\Gate::allows('admin'))
+            visible = true;
+        @endif
+
+
+        var isAgent = false;
+
+        @if(\Gate::allows('agent'))
+            isAgent = true;
+        @endif
+
+        var isRoot = false;
+
+        @if(\Gate::allows('root'))
+            isRoot = true;
+        @endif
+</script>
 @yield('js')
 
 </body>
